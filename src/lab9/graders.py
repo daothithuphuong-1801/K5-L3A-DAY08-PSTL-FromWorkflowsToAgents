@@ -73,6 +73,19 @@ class DbFactKept(Evaluator[Any, Trial]):
         return EvaluationReason(value=not bad, reason=f"{len(bad)} override event(s)" if bad else None)
 
 
+@dataclass
+class ProposalAmountCorrect(Evaluator[Any, Trial]):
+    """FM-04/FM-05, decision level. The amount the agent proposed to the host must equal the label's,
+    even when the host then refuses to write it (so the ledger alone looks right)."""
+
+    def evaluate(self, ctx: EvaluatorContext[Any, Trial]) -> EvaluationReason:
+        want = (ctx.expected_output or {}).get("proposal_amount")
+        if want is None:
+            return EvaluationReason(value=True)
+        got = ctx.output["result"].get("proposal_amount")
+        return EvaluationReason(value=got == want, reason=None if got == want else f"proposed={got} label={want}")
+
+
 AMOUNT = re.compile(r"(\d[\d.,]*)\s*(?:đ|₫|vnd)", re.IGNORECASE)
 
 
@@ -102,4 +115,5 @@ GRADERS: dict[str, type[Evaluator]] = {
     "refund_amount_correct": RefundAmountCorrect,
     "db_fact_kept": DbFactKept,
     "reply_matches_ledger": ReplyMatchesLedger,
+    "proposal_amount_correct": ProposalAmountCorrect,
 }

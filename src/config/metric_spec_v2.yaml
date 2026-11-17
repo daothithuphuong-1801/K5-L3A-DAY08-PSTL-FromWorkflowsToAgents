@@ -20,7 +20,9 @@ metrics:
   # band's low end and 0.23 above flaky_regression (0.5714), so it neither blocks honest PRs nor misses 1/5-seed bugs.
   - {id: pass_hat_5,            kind: capability, level: outcome,    grader: lab9.stats.pass_hat_k, threshold: {min: 0.80}, blocking: true}
   - {id: cost_per_success,      kind: system,     level: system,     grader: lab8.metrics.summarize, threshold: {max_increase: 0.10}, blocking: false}
-  - {id: reply_matches_ledger,  kind: capability, level: outcome,    grader: code, threshold: {min: 1.0}, blocking: true}   # FM-08
+  - {id: proposal_amount_correct, kind: capability, level: outcome,  grader: code, blocking: true,
+     threshold: {min: 0.90, no_significant_drop: true}}   # FM-04/FM-05: wrong proposal the host may refuse
+  - {id: reply_matches_ledger, kind: capability, level: outcome,    grader: code, threshold: {min: 1.0}, blocking: true}   # FM-08
 slices:
   - {name: denial, metric: pass_rate, min: 0.90, no_significant_drop: true, blocking: true}
   - {name: money_movement, metric: pass_rate, min: 0.95, no_significant_drop: true, blocking: true}
