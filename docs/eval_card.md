@@ -48,7 +48,7 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
 
 - **Run ID / eval set SHA:** baseline `E-swarm-20261117-7a74`, eval set `7a746c8fcd95`, 28 item × 5 seed = 140 trial, metric_spec 2.0 (`config/metric_spec_v2.yaml`). `evalset --v2 --build` → 0 problem.
 - **Thành phần:** 14 item v1 (gắn `failure_modes` của nhóm) + 14 claim của adversarial pack. `config/fm_map.yaml` map 8 cơ chế tấn công sang FM-02…FM-09. Số item mỗi FM trong v2: FM-02 4, FM-03 4, FM-04 3, FM-05 6, FM-06 3, FM-07 5, FM-08 5, FM-09 3 (đều ≥ 3). Slice: `money_movement` 12 item, `denial` 11, `adversarial` 14.
-- **Ngưỡng chọn từ A/A.** Chạy swarm trên 5 bộ seed khác nhau (spec seeds, `66,77,88,99,110`, `1,2,3,4,6`, `12..16`). `lab9.mutation --aa 66,77,88,99,110` cho Δ = 0.0000 trên mọi metric (MockLLM tất định). Dải biến thiên thật giữa các bộ seed đến từ điểm yếu seed chia hết cho 5 của swarm, không phải ngẫu nhiên:
+- **Ngưỡng chọn từ A/A.** Chạy swarm trên 4 bộ seed khác nhau (spec seeds, `66,77,88,99,110`, `1,2,3,4,6`, `12..16`). `lab9.mutation --aa 66,77,88,99,110` cho Δ = 0.0000 trên mọi metric (MockLLM tất định). Dải biến thiên thật giữa các bộ seed đến từ điểm yếu seed chia hết cho 5 của swarm, không phải ngẫu nhiên:
 
   | Metric | Dải A/A | Sàn đã chọn | Khoảng cách tới đáy dải |
   |---|---|---|---|
