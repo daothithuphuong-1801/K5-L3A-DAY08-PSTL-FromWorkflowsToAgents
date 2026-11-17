@@ -20,3 +20,6 @@ src/reports/bonus_hidden.json
 
 # Instructor-only hidden pack. Never push it to this repo.
 src/eval/instructor/
+
+# Local Lab 9 verification stores
+.pytest-tmp*/
