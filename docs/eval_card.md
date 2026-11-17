@@ -42,4 +42,30 @@ Card này đi kèm mỗi báo cáo và được dùng lại ở Day 10.
   - `db_fact_kept` chỉ thấy lỗi có event `model_override`; biến thể `quiet_override` không để lại event nên phải dựa vào `refund_amount_correct` đọc ledger.
   - `approval_bypass` luôn 0 vì host của Lab 8 chặn trước; số 0 không chứng minh agent đúng.
   - Judge replay trên CSV đã công khai; chưa có held-out mới và chưa đo trên người dùng thật.
-- **Khi nào tăng eval-set version:** khi thêm hoặc bỏ item (vd. biến trace case thành item mới, hoặc adversarial pack v2), khi sửa nhãn (như H-081 bên judge), hoặc khi đổi `failure_modes`. Mỗi lần đó phải sinh lại baseline vì `eval_set_sha` đổi (bài này đã trải qua một lần: gắn `failure_modes` ở M1 đổi sha từ `d8c6…` sang `b22c…`).
+- **Khi nào tăng eval-set version (xem thêm mục v2 bên dưới):** khi thêm hoặc bỏ item (vd. biến trace case thành item mới, hoặc adversarial pack v2), khi sửa nhãn (như H-081 bên judge), hoặc khi đổi `failure_modes`. Mỗi lần đó phải sinh lại baseline vì `eval_set_sha` đổi (bài này đã trải qua một lần: gắn `failure_modes` ở M1 đổi sha từ `d8c6…` sang `b22c…`).
+
+## Eval set v2 (M5–M7)
+
+- **Run ID / eval set SHA:** baseline `E-swarm-20261117-7a74`, eval set `7a746c8fcd95`, 28 item × 5 seed = 140 trial, metric_spec 2.0 (`config/metric_spec_v2.yaml`). `evalset --v2 --build` → 0 problem.
+- **Thành phần:** 14 item v1 (gắn `failure_modes` của nhóm) + 14 claim của adversarial pack. `config/fm_map.yaml` map 8 cơ chế tấn công sang FM-02…FM-09. Số item mỗi FM trong v2: FM-02 4, FM-03 4, FM-04 3, FM-05 6, FM-06 3, FM-07 5, FM-08 5, FM-09 3 (đều ≥ 3). Slice: `money_movement` 12 item, `denial` 11, `adversarial` 14.
+- **Ngưỡng chọn từ A/A.** Chạy swarm trên 5 bộ seed khác nhau (spec seeds, `66,77,88,99,110`, `1,2,3,4,6`, `12..16`). `lab9.mutation --aa 66,77,88,99,110` cho Δ = 0.0000 trên mọi metric (MockLLM tất định). Dải biến thiên thật giữa các bộ seed đến từ điểm yếu seed chia hết cho 5 của swarm, không phải ngẫu nhiên:
+
+  | Metric | Dải A/A | Sàn đã chọn | Khoảng cách tới đáy dải |
+  |---|---|---|---|
+  | pass_hat_5 | 0.893 – 1.000 | 0.80 | 0.093 |
+  | slice money_movement / pass_rate | 1.000 (không đổi) | 0.95 | 0.05 |
+  | slice denial / pass_rate | 0.945 – 1.000 | 0.90 | 0.045 |
+  | slice adversarial / pass_rate | 0.971 – 1.000 | 0.90 | 0.071 |
+
+  Sàn nằm ngoài dải (thấp hơn đáy dải) nên PR trung thực không bị chặn ngẫu nhiên; đồng thời cao hơn variant lỗi (`flaky_regression` `pass_hat_5` = 0.571, cách sàn 0.23). **Với LLM thật dải nhiễu > 0** (cùng input mà mỗi lần chạy ra một kết quả), nên phải chạy A/A lại, lấy dải thật rồi đặt sàn thấp hơn đáy dải đó; con số 0 ở đây chỉ là tính chất của MockLLM.
+- **Slice nào bắt lỗi nào** (scorecard `lab9.mutation`: **3/3 regression bị chặn, 0 báo nhầm**; `fixed`, `honest_refactor` đều merge):
+
+  | Variant | Bị chặn bởi | Vì sao các metric khác không đủ |
+  |---|---|---|
+  | `slice_regression` | chỉ `slice:money_movement/pass_rate` (0.850, Δ −0.150, CI [−0.300, +0.000]) | `pass_rate` chung 0.9357 vẫn trên sàn 0.85 và CI [−0.121, +0.029] chạm 0; lỗi chỉ nằm ở claim có hoàn tiền |
+  | `flaky_regression` (lỗi 1/5 seed) | `pass_hat_5` (0.571 < 0.80), `pass_rate` (CI [−0.114, −0.014]), `slice:money_movement` | `pass_rate` chặn được nhưng sát sao (cận trên chỉ −0.014); `pass_hat_5` chặn với biên rộng |
+  | `seeded_regression` | `refund_amount_correct`, `pass_rate`, `pass_hat_5`, `reply_matches_ledger` và cả 3 slice | lỗi rộng, mọi tầng đều thấy |
+- **Chống gian lận (M7).** `gate.integrity_check` chặn (exit 1, lý do `INTEGRITY`): metric NaN/inf; số dòng ≠ items × seeds; dòng trùng; tập (item, seed) khác baseline; `evaluator_failures` khác rỗng hoặc dòng thiếu giá trị của grader; metrics không khớp khi tính lại từ rows; đổi nhãn slice của item; nới spec so với `--base-spec` (hạ `min`, nâng `max`, bỏ `no_significant_drop`, bỏ `blocking`, xoá metric hoặc slice). `lab9.traps` chặn đủ 4 trap công khai (`evaluator_errors_as_nan`, `dropped_failing_rows`, `cherry_picked_seeds`, `loosened_spec`); thêm 7 trap tự nghĩ (sửa tay metrics, thay dòng fail bằng dòng trùng, `evaluator_failures` trên run xanh, gỡ nhãn slice, tắt `blocking` slice, xoá slice, xoá metric) cũng đều bị chặn.
+- **Giới hạn cỡ mẫu.** Một bug chỉ xuất hiện ở 1/3 seed (`rare`) **không** phát hiện ổn định được với 5 seed: mỗi item chỉ có 5 lần chạy nên một bug ở 1/3 seed có xác suất đáng kể rơi vào đúng 0 hoặc 1 seed bị lộ, và CI của slice chỉ gồm 12 item. Không hạ ngưỡng cho đến khi gate "bắt được" nó; hướng xử lý đúng là tăng số seed hoặc số item, không phải siết sàn.
+- **Điểm cần cẩn trọng.** (1) `pass_hat_5` baseline của swarm chỉ 0.893 vì chính swarm có điểm yếu seed chia hết cho 5; sàn 0.80 chấp nhận điểm yếu đó và sẽ cần nâng khi baseline được sửa (ratchet chỉ cho phép chặt hơn). (2) Cả 3 item `cross_principal` đều pass trên mọi variant (host chặn ở `lookup_order`), nên chưa có chứng cứ gate bắt được lỗi FM-09 thật.
+- **Ai xử lý khi gate exit 1:** Eval owner (xem `docs/PRD_v1.1.md`); nếu lý do là `INTEGRITY`, coi báo cáo là không đáng tin và chạy lại bằng `lab9.eval`, tuyệt đối không sửa tay `reports/`.

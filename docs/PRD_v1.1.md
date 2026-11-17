@@ -53,7 +53,7 @@ Quy tắc: tiền và phê duyệt luôn chấm bằng code. Judge chỉ dùng c
 - [ ] 14 item: CI rộng, chỉ bắt được hồi quy lớn; lỗi 1/3 seed không phát hiện ổn định với 5 seed.
 - [ ] Judge replay trên CSV đã công khai, chưa có tập held-out mới.
 - [ ] `reply_matches_ledger` chỉ thấy lỗi khi shape ghi event `reply`.
-- [ ] Gate chưa có kiểm tra toàn vẹn report (M7): report bị bỏ dòng fail hoặc chọn seed chưa bị chặn.
+- [ ] `integrity_check` chỉ bắt các kiểu gian lận đã nghĩ tới (bỏ/trùng dòng, đổi seed, NaN, sửa tay metrics, gỡ nhãn slice, nới spec); kiểu mới có thể lọt.
 
 ## 7. Khi nào lên v1.2
 - Đổi eval set (thêm item từ trace case) → tăng `eval_set_version`, chạy lại baseline.
